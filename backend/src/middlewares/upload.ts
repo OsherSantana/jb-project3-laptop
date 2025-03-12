@@ -7,7 +7,7 @@ import AppError from "../errors/app-error";
 import { StatusCodes } from "http-status-codes";
 
 // Ensure uploads directory exists
-const uploadsDir = '../../uploads';
+const uploadsDir = './uploads';
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
