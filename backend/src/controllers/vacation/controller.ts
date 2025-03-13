@@ -26,8 +26,6 @@ export async function getAllVacations(req: UserRequest, res: Response, next: Nex
             const vacationData = vacation.toJSON();
             return {
                 ...vacationData,
-                isTagged: vacationData.vacationTags && vacationData.vacationTags.length > 0,
-                vacationTags: undefined // Remove vacationTags array from response
             };
         });
 
@@ -74,11 +72,13 @@ export async function createVacation(req: Request<{}, {}, {
     description: string,
     startDate: string,
     endDate: string,
-    price: number,
-    imageFileName: string
+    price: number
 }>, res: Response, next: NextFunction) {
     try {
-        const newVacation = await Vacation.create(req.body);
+        const newVacation = await Vacation.create({
+            ...req.body,
+            imageFileName: req.imageUrl
+        });
         res.status(StatusCodes.CREATED).json(newVacation);
     } catch (e) {
         next(e);
@@ -90,8 +90,7 @@ export async function updateVacation(req: Request<{ vacationId: string }, {}, {
     description: string,
     startDate: string,
     endDate: string,
-    price: number,
-    imageFileName: string
+    price: number
 }>, res: Response, next: NextFunction) {
     try {
         const { vacationId } = req.params;
@@ -103,19 +102,15 @@ export async function updateVacation(req: Request<{ vacationId: string }, {}, {
         }
 
         // If image file has changed, delete the old one
-        if (req.body.imageFileName && req.body.imageFileName !== vacation.imageFileName) {
-            const oldImagePath = `../../../uploads/${vacation.imageFileName}`;
-            try {
-                if (fs.existsSync(oldImagePath)) {
-                    fs.unlinkSync(oldImagePath);
-                }
-            } catch (error) {
-                console.error("Error deleting old image:", error);
-                // Continue with update even if image deletion fails
-            }
+        if (req.imageUrl) {
+            await vacation.update({
+                ...req.body,
+                imageFileName: req.imageUrl
+            });
+        } else {
+            await vacation.update(req.body);
         }
 
-        await vacation.update(req.body);
         res.json(vacation);
     } catch (e) {
         next(e);
@@ -130,17 +125,6 @@ export async function deleteVacation(req: Request<{ vacationId: string }>, res: 
 
         if (!vacation) {
             throw new AppError(StatusCodes.NOT_FOUND, "Vacation not found");
-        }
-
-        // Delete image file if it exists
-        const imagePath = `../../../uploads/${vacation.imageFileName}`;
-        try {
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
-            }
-        } catch (error) {
-            console.error("Error deleting image:", error);
-            // Continue with delete even if image deletion fails
         }
 
         // This will also delete all related tags due to CASCADE constraint

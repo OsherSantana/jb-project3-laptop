@@ -1,6 +1,6 @@
 {
     "app": {
-        "port": "3001",
+        "port": "3002",
         "name": "Vacation Tagging System App",
         "secret": "MySecret",
         "jwtSecret": "MyJwtSecret"
@@ -16,6 +16,19 @@
         "logging": true,
         "sync": {
             "force": false
+        }
+    },
+    "s3": {
+        "bucket": "il.co.johnbryce.oshersantana",
+        "isLocalstack": true,
+        "connection": {
+            "region": "us-east-1",
+            "forcePathStyle": true,
+            "credentials": {
+                "accessKeyId": "test",
+                "secretAccessKey": "test"
+            },
+            "endpoint": "http://127.0.0.1:4566"
         }
     }
 }

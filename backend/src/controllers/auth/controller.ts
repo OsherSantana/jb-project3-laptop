@@ -52,7 +52,7 @@ export async function register(req: Request<{}, {}, {
 
         res.status(StatusCodes.CREATED).json({
             user: userResponse,
-            token
+            jwt: token
         });
     } catch (e) {
         next(e);
@@ -100,7 +100,7 @@ export async function login(req: Request<{}, {}, {
 
         res.json({
             user: userResponse,
-            token
+            jwt: token
         });
     } catch (e) {
         next(e);

@@ -1,4 +1,4 @@
-import express from "express";
+import express, { json } from "express";
 import config from "config";
 import sequelize from "./db/sequelize";
 import cors from "cors";
@@ -8,47 +8,38 @@ import vacationTagRouter from "./routers/vacation-tags";
 import notFound from "./middlewares/not-found";
 import errorLogger from "./middlewares/error/error-logger";
 import errorResponder from "./middlewares/error/error-responder";
-
+import enforceAuth from "./middlewares/enforceAuth";
+import { createAppBucketIfNotExist } from "./aws/aws";
+import fileUpload from "express-fileupload";
 
 const app = express();
 
-
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Change this line in app.ts
-app.use('/uploads', express.static('./uploads'));
-
-// Routes
-app.use('/auth', authRouter);
-app.use('/vacations', vacationRouter);
-app.use('/vacation-tags', vacationTagRouter);
-
-// Error handling middleware
-app.use(notFound);
-app.use(errorLogger);
-app.use(errorResponder);
-
 const port = config.get<string>('app.port');
 const appName = config.get<string>('app.name');
+const force = config.get<boolean>('sequelize.sync.force');
 
-async function start() {
-    try {
-        // Sync database models with database
-        const force = config.get<boolean>('sequelize.sync.force');
-        await sequelize.sync({ force });
-        console.log('Database synced successfully');
+(async () => {
+    await sequelize.sync({ force });
+    await createAppBucketIfNotExist()
 
-        // Start server
-        app.listen(port, () => {
-            console.log(`${appName} is running on port ${port}`);
-        });
-    } catch (error) {
-        console.error('Failed to start server:', error);
-        process.exit(1);
-    }
-}
+    // Middleware
+    app.use(cors());
+    app.use(json());
+    app.use(fileUpload())
 
-start();
+    // Routes
+    app.use('/auth', authRouter);
+    app.use(enforceAuth)
+
+    app.use('/vacations', vacationRouter);
+    app.use('/vacation-tags', vacationTagRouter);
+
+    // Error handling middleware
+    app.use(notFound);
+    app.use(errorLogger);
+    app.use(errorResponder);
+
+    app.listen(port, () => {
+        console.log(`${appName} is running on port ${port}`);
+    });
+})()

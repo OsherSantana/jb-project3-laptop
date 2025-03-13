@@ -14,8 +14,8 @@ import {
     updateVacationValidator,
     vacationIdValidator
 } from "../controllers/vacation/validator";
-import { authenticate, authorizeAdmin } from "../middlewares/auth";
-import { uploadVacationImage } from "../middlewares/upload";
+import { authorizeAdmin } from "../middlewares/auth";
+import fileUploader from "../middlewares/file-uploader";
 
 const vacationRouter = Router();
 
@@ -25,24 +25,21 @@ vacationRouter.get('/:vacationId', paramsValidation(vacationIdValidator), getVac
 
 // Admin only routes
 vacationRouter.post('/',
-    authenticate,
     authorizeAdmin,
-    uploadVacationImage,
+    fileUploader,
     validation(newVacationValidator),
     createVacation
 );
 
 vacationRouter.put('/:vacationId',
-    authenticate,
     authorizeAdmin,
     paramsValidation(vacationIdValidator),
-    uploadVacationImage,
+    fileUploader,
     validation(updateVacationValidator),
     updateVacation
 );
 
 vacationRouter.delete('/:vacationId',
-    authenticate,
     authorizeAdmin,
     paramsValidation(vacationIdValidator),
     deleteVacation
@@ -50,7 +47,6 @@ vacationRouter.delete('/:vacationId',
 
 // Reports
 vacationRouter.get('/reports/tags',
-    authenticate,
     authorizeAdmin,
     getTaggingStats
 );
